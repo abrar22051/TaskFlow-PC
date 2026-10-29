@@ -1,21 +1,16 @@
-TASKFLOW FOR WINDOWS (.exe) - GitHub builds it for you
+TASKFLOW FOR WINDOWS - VERSION 2.1 (updated 29/10/2026)
 
-Use a NEW repository (e.g. "taskflow-desktop"), separate from the phone one.
+Your existing GitHub repository "taskflow-desktop" already has build.yml - leave it as it is.
 
-1. github.com > New repository > name: taskflow-desktop (Private is fine).
-2. Add file > Upload files: upload ALL 8 files from this folder to the repository root:
-   main.js, preload.js, wpreload.js, widget.html, index.html, icon.png, package.json, build.yml
+1. Open the repository > Add file > Upload files. Upload all 7 files from this folder to the ROOT
+   (same names, so they replace the old ones):
+   main.js, preload.js, wpreload.js, widget.html, index.html, icon.png, package.json
    Commit.
-3. Click build.yml > pencil (edit) icon > in the file-name box, put the cursor at the very start and type
-   .github/workflows/
-   so it reads  .github/workflows/build.yml  > Commit changes.
-   (same trick as for the phone app)
-4. Open the Actions tab. "Build Windows app" runs (about 4-6 minutes).
-5. Open the finished run > Artifacts > download TaskFlow-Windows (zip) > unzip. You get:
-   TaskFlow-Setup-2.0.0.exe     (installer, creates Start menu + desktop shortcut)
-   TaskFlow-Portable-2.0.0.exe  (runs without installing)
-6. Windows may say "Windows protected your PC": click More info > Run anyway
-   (the app is not code-signed).
+2. Actions tab > wait for the green tick (about 3-5 minutes) > download TaskFlow-Windows.
+3. Unzip > run  TaskFlow-Setup-2.1.0.exe  (it installs over the old version; your tasks stay).
+   Windows may say "Windows protected your PC": More info > Run anyway.
+4. Open TaskFlow > Settings: the bottom line shows "TaskFlow v2.1 · updated 29/10/2026".
+5. Settings > Desktop: switch "Start TaskFlow when Windows starts" OFF and ON once, so the
+   startup entry is rewritten. Then restart the PC to test it.
 
-Your data is stored in:  %APPDATA%\taskflow-desktop\taskflow-data.json  (plus a .bak backup).
-Move data between phone and PC for now with Settings > Export backup / Import backup.
+Your data stays in %APPDATA%\taskflow-desktop\taskflow-data.json

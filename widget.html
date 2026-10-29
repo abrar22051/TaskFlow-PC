@@ -2,30 +2,31 @@
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden}
 body{background:#141c26;color:#e8eef3;font:13px/1.35 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;border:1px solid #2b3946;user-select:none}
-header{display:flex;align-items:center;gap:6px;padding:8px 10px;-webkit-app-region:drag;color:#2dd4bf;font-weight:700;font-size:14px}
+header{display:flex;align-items:center;gap:4px;padding:6px 6px 6px 10px;-webkit-app-region:drag;color:#3B82F6;font-weight:700;font-size:14px;min-height:34px}
 header span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-header button{-webkit-app-region:no-drag;background:none;border:0;color:#9fb0be;font-size:15px;cursor:pointer;padding:2px 6px;border-radius:6px}header button:hover{background:#2b3946;color:#fff}
-#list{flex:1;overflow:hidden;padding:0 10px}
-.row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #1f2b38}
-.dot{font-size:12px;width:14px}.go{background:#1f2b38;border:0;color:#e8eef3;border-radius:6px;cursor:pointer;width:26px;height:24px}.go:hover{background:#2dd4bf;color:#06201d}
-.t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m{color:#9fb0be;font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}.m.r{color:#2dd4bf;font-weight:600}
+header button{-webkit-app-region:no-drag;background:none;border:0;color:#9fb0be;font-size:15px;cursor:pointer;padding:2px 7px;border-radius:6px;line-height:1.2}header button:hover{background:#2b3946;color:#fff}
+#list{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 10px}#list::-webkit-scrollbar{width:6px}#list::-webkit-scrollbar-thumb{background:#2b3946;border-radius:3px}
+.row{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid #1f2b38}
+.dot{font-size:12px;width:14px;padding-top:3px}.go{flex:none;background:#1f2b38;border:0;color:#e8eef3;border-radius:6px;cursor:pointer;width:26px;height:24px}.go:hover{background:#3B82F6;color:#fff}
+.t{flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;padding-top:2px}.m{flex:none;color:#9fb0be;font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;padding-top:3px}.m.r{color:#3B82F6;font-weight:600}
 #q{display:flex;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid #1f2b38;color:#9fb0be;font-style:italic;font-size:12px;max-height:38%;overflow:hidden}#q img{width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none}
-.empty{color:#9fb0be;padding:10px 0}
+.empty{color:#9fb0be;padding:10px 0}body.min #list,body.min #q{display:none}body.min header{min-height:36px}
 </style></head><body>
-<header><span id="ttl">TaskFlow · Today</span><button id="op" title="Open TaskFlow">⤢</button><button id="hd" title="Hide widget">✕</button></header>
+<header><span id="ttl">TaskFlow · Today</span><button id="mn" title="Minimize widget" aria-label="Minimize widget">—</button><button id="op" title="Open TaskFlow" aria-label="Open TaskFlow">⤢</button><button id="hd" title="Hide widget" aria-label="Hide widget">✕</button></header>
 <div id="list"></div><div id="q" hidden><img id="qi" alt="" hidden><span id="qt"></span></div>
 <script>
-const P=['#ff6b6b','#ffa040','#5fd068','#64b5f6'],$=s=>document.querySelector(s);let D=null;
+const P=['#ff6b6b','#ffa040','#5fd068','#64b5f6'],$=s=>document.querySelector(s);let D=null,MIN=false;
 const hms=s=>{s=Math.max(0,Math.floor(s));return Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
-function render(){const L=$('#list');L.replaceChildren();if(!D){L.append(Object.assign(document.createElement('div'),{className:'empty',textContent:'Waiting for TaskFlow…'}));return}
- $('#ttl').textContent=D.date===today()?'TaskFlow · Today':'TaskFlow · refreshing…';
+function head(){const r=D&&D.top.find(t=>t.r);if(MIN){$('#ttl').textContent=r?'▶ '+r.t+' · '+hms((Date.now()-r.b)/1000):'TaskFlow'+(D?' · '+D.top.length+' pending':'')}else $('#ttl').textContent=D&&D.date!==today()?'TaskFlow · refreshing…':'TaskFlow · Today'}
+function render(){const L=$('#list');L.replaceChildren();if(!D){L.append(Object.assign(document.createElement('div'),{className:'empty',textContent:'Waiting for TaskFlow…'}));head();return}
  if(!D.top.length)L.append(Object.assign(document.createElement('div'),{className:'empty',textContent:'No pending tasks 🎉'}));
  D.top.forEach(t=>{const r=document.createElement('div');r.className='row';const dot=document.createElement('span');dot.className='dot';dot.textContent='●';dot.style.color=P[t.p]||P[2];
   const b=document.createElement('button');b.className='go';b.textContent=t.r?'⏸':'▶';b.title=t.r?'Pause':'Start / resume';b.onclick=()=>wapi.action({type:'toggle',id:t.id});
   const n=document.createElement('span');n.className='t';n.textContent=t.n+'. '+t.t;const m=document.createElement('span');m.className='m'+(t.r?' r':'');m.dataset.id=t.id;
   r.append(dot,b,n,m);L.append(r)});
  const q=$('#q');q.hidden=!(D.q||D.qi);$('#qt').textContent=D.q?'“'+D.q+'”':'';const i=$('#qi');i.hidden=!D.qi;if(D.qi)i.src=D.qi;live()}
-function live(){if(!D)return;D.top.forEach(t=>{const m=document.querySelector('.m[data-id="'+t.id+'"]');if(!m)return;m.textContent=t.r?'▶ '+hms((Date.now()-t.b)/1000)+' / '+t.tg:(t.tm?t.tm+' · ':'')+hms(t.k)+' / '+t.tg})}
-wapi.onData(d=>{D=d;render()});$('#op').onclick=()=>wapi.open();$('#hd').onclick=()=>wapi.hide();$('#ttl').ondblclick=()=>wapi.open();setInterval(live,1000);render();
+function live(){if(!D)return;head();D.top.forEach(t=>{const m=document.querySelector('.m[data-id="'+t.id+'"]');if(!m)return;m.textContent=t.r?'▶ '+hms((Date.now()-t.b)/1000)+' / '+t.tg:(t.tm?t.tm+' · ':'')+hms(t.k)+' / '+t.tg})}
+function setMin(v){MIN=!!v;document.body.classList.toggle('min',MIN);const b=$('#mn');b.textContent=MIN?'▢':'—';b.title=b.ariaLabel=MIN?'Expand widget':'Minimize widget';head()}
+wapi.onData(d=>{D=d;render()});wapi.onMin(setMin);$('#mn').onclick=()=>wapi.min();$('#op').onclick=()=>wapi.open();$('#hd').onclick=()=>wapi.hide();$('#ttl').ondblclick=()=>wapi.open();setInterval(live,1000);render();
 </script></body></html>
