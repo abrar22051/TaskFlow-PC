@@ -12,7 +12,7 @@ function boot() {
   fs.mkdirSync(dir, { recursive: true });
   const dataFile = path.join(dir, 'taskflow-data.json');
   const prefFile = path.join(dir, 'prefs.json');
-  const iconImg = nativeImage.createFromPath(path.join(__dirname, 'icon.png'));
+  const iconImg = nativeImage.createFromPath(path.join(__dirname, process.platform === 'win32' ? 'icon.ico' : 'icon.png'));
   const startedHidden = process.argv.includes('--hidden');
 
   // ---------- safe saving (survives power cuts) ----------

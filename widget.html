@@ -7,7 +7,7 @@ header span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 header button{-webkit-app-region:no-drag;background:none;border:0;color:#9fb0be;font-size:15px;cursor:pointer;padding:2px 7px;border-radius:6px;line-height:1.2}header button:hover{background:#2b3946;color:#fff}
 #list{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 10px}#list::-webkit-scrollbar{width:6px}#list::-webkit-scrollbar-thumb{background:#2b3946;border-radius:3px}
 .row{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid #1f2b38}
-.dot{font-size:12px;width:14px;padding-top:3px}.go{flex:none;background:#1f2b38;border:0;color:#e8eef3;border-radius:6px;cursor:pointer;width:26px;height:24px}.go:hover{background:#3B82F6;color:#fff}
+.dot{font-size:12px;width:14px;padding-top:3px}.go{flex:none;-webkit-app-region:no-drag;touch-action:manipulation;background:#1f2b38;border:0;color:#e8eef3;border-radius:6px;cursor:pointer;width:26px;height:24px}.go:hover{background:#3B82F6;color:#fff}
 .t{flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;padding-top:2px}.m{flex:none;color:#9fb0be;font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;padding-top:3px}.m.r{color:#3B82F6;font-weight:600}
 #q{display:flex;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid #1f2b38;color:#9fb0be;font-style:italic;font-size:12px;max-height:38%;overflow:hidden}#q img{width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none}
 .empty{color:#9fb0be;padding:10px 0}body.min #list,body.min #q{display:none}body.min header{min-height:36px}
@@ -19,14 +19,18 @@ const P=['#ff6b6b','#ffa040','#5fd068','#64b5f6'],$=s=>document.querySelector(s)
 const hms=s=>{s=Math.max(0,Math.floor(s));return Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 function head(){const r=D&&D.top.find(t=>t.r);if(MIN){$('#ttl').textContent=r?'▶ '+r.t+' · '+hms((Date.now()-r.b)/1000):'TaskFlow'+(D?' · '+D.top.length+' pending':'')}else $('#ttl').textContent=D&&D.date!==today()?'TaskFlow · refreshing…':'TaskFlow · Today'}
-function render(){const L=$('#list');L.replaceChildren();if(!D){L.append(Object.assign(document.createElement('div'),{className:'empty',textContent:'Waiting for TaskFlow…'}));head();return}
+let SIG='',lastClick=0;
+const sigOf=d=>JSON.stringify([d.date,d.q,d.qi,d.top.map(t=>[t.id,t.t,t.p,t.tm,t.tg,t.r,t.n])]);
+function render(){const L=$('#list');if(!D){SIG='';L.replaceChildren(Object.assign(document.createElement('div'),{className:'empty',textContent:'Waiting for TaskFlow…'}));head();return}
+ const sg=sigOf(D);if(sg===SIG){live();return}SIG=sg;L.replaceChildren();
  if(!D.top.length)L.append(Object.assign(document.createElement('div'),{className:'empty',textContent:'No pending tasks 🎉'}));
  D.top.forEach(t=>{const r=document.createElement('div');r.className='row';const dot=document.createElement('span');dot.className='dot';dot.textContent='●';dot.style.color=P[t.p]||P[2];
-  const b=document.createElement('button');b.className='go';b.textContent=t.r?'⏸':'▶';b.title=t.r?'Pause':'Start / resume';b.onclick=()=>wapi.action({type:'toggle',id:t.id});
+  const b=document.createElement('button');b.className='go';b.type='button';b.dataset.id=t.id;b.textContent=t.r?'⏸':'▶';b.title=t.r?'Pause':'Start / resume';
   const n=document.createElement('span');n.className='t';n.textContent=t.n+'. '+t.t;const m=document.createElement('span');m.className='m'+(t.r?' r':'');m.dataset.id=t.id;
   r.append(dot,b,n,m);L.append(r)});
- const q=$('#q');q.hidden=!(D.q||D.qi);$('#qt').textContent=D.q?'“'+D.q+'”':'';const i=$('#qi');i.hidden=!D.qi;if(D.qi)i.src=D.qi;live()}
+ const q=$('#q');q.hidden=!(D.q||D.qi);$('#qt').textContent=D.q?'“'+D.q+'”':'';const i=$('#qi');i.hidden=!D.qi;if(D.qi&&i.getAttribute('src')!==D.qi)i.src=D.qi;live()}
 function live(){if(!D)return;head();D.top.forEach(t=>{const m=document.querySelector('.m[data-id="'+t.id+'"]');if(!m)return;m.textContent=t.r?'▶ '+hms((Date.now()-t.b)/1000)+' / '+t.tg:(t.tm?t.tm+' · ':'')+hms(t.k)+' / '+t.tg})}
 function setMin(v){MIN=!!v;document.body.classList.toggle('min',MIN);const b=$('#mn');b.textContent=MIN?'▢':'—';b.title=b.ariaLabel=MIN?'Expand widget':'Minimize widget';head()}
+$('#list').addEventListener('click',e=>{const b=e.target.closest('.go');if(!b)return;const n=Date.now();if(n-lastClick<350)return;lastClick=n;b.style.opacity='.5';setTimeout(()=>b.style.opacity='',400);wapi.action({type:'toggle',id:b.dataset.id})});
 wapi.onData(d=>{D=d;render()});wapi.onMin(setMin);$('#mn').onclick=()=>wapi.min();$('#op').onclick=()=>wapi.open();$('#hd').onclick=()=>wapi.hide();$('#ttl').ondblclick=()=>wapi.open();setInterval(live,1000);render();
 </script></body></html>
