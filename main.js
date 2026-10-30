@@ -1,6 +1,8 @@
 const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, nativeImage, screen } = require('electron');
 const fs = require('fs');
 const path = require('path');
+let autoUpdater = null;
+try { autoUpdater = require('electron-updater').autoUpdater; } catch (e) { /* running from source */ }
 
 app.commandLine.appendSwitch('lang', 'en-GB'); // date pickers show dd/mm/yyyy
 app.setAppUserModelId('com.taskflow.desktop');
@@ -64,6 +66,27 @@ function boot() {
     savePrefs(); refreshMenu();
   }
 
+
+  // ---------- auto-update (GitHub Releases, installed version only) ----------
+  const canUpdate = !!autoUpdater && app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE;
+  let upd = { state: canUpdate ? 'idle' : 'off', ver: '', pct: 0, msg: '' };
+  function setUpd(o) { upd = Object.assign(upd, o); if (win && !win.isDestroyed()) win.webContents.send('desk:upd', upd); refreshMenu(); }
+  function checkUpdate() { if (!canUpdate || upd.state === 'checking' || upd.state === 'downloading') return; autoUpdater.checkForUpdates().catch((e) => setUpd({ state: 'error', msg: String((e && e.message) || e).slice(0, 120) })); }
+  function installUpdate() { quitting = true; autoUpdater.quitAndInstall(false, true); }
+  if (canUpdate) {
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on('checking-for-update', () => setUpd({ state: 'checking' }));
+    autoUpdater.on('update-not-available', () => setUpd({ state: 'current' }));
+    autoUpdater.on('update-available', (i) => setUpd({ state: 'downloading', ver: i.version, pct: 0 }));
+    autoUpdater.on('download-progress', (p) => setUpd({ state: 'downloading', pct: Math.round(p.percent || 0) }));
+    autoUpdater.on('update-downloaded', (i) => { setUpd({ state: 'ready', ver: i.version }); toast('TaskFlow ' + i.version + ' is ready', 'It installs when you quit TaskFlow, or open Settings > Restart to update.'); });
+    autoUpdater.on('error', (e) => setUpd({ state: 'error', msg: String((e && e.message) || e).slice(0, 120) }));
+  }
+  ipcMain.on('desk:upd-get', (e) => { e.returnValue = upd; });
+  ipcMain.on('desk:upd-check', checkUpdate);
+  ipcMain.on('desk:upd-install', () => { if (upd.state === 'ready') installUpdate(); });
+
   // ---------- notifications ----------
   function toast(title, body) {
     if (!Notification.isSupported()) return;
@@ -109,6 +132,7 @@ function boot() {
       { label: 'Open TaskFlow', click: showMain },
       { label: 'Desktop widget', type: 'checkbox', checked: !!prefs.widget, click: (m) => setPref('widget', m.checked) },
       { label: 'Bring widget to front', click: () => { if (wwin && !wwin.isDestroyed()) { wwin.showInactive(); wwin.moveTop(); } } },
+      ...(upd.state === 'ready' ? [{ label: 'Restart to update to ' + upd.ver, click: installUpdate }] : []),
       { label: 'Start with Windows', type: 'checkbox', checked: !!prefs.auto, click: (m) => setPref('auto', m.checked) },
       { type: 'separator' },
       { label: 'Quit', click: () => { quitting = true; app.quit(); } }
@@ -181,6 +205,7 @@ function boot() {
     tray.on('click', toggleMain);
     refreshMenu();
     if (prefs.widget) createWidget();
+    if (canUpdate) { setTimeout(checkUpdate, 15000); setInterval(checkUpdate, 4 * 3600 * 1000); }
     if (startedHidden) toast('TaskFlow started', 'Running in the tray. Click the tray icon to open it.');
   });
 }

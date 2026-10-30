@@ -7,5 +7,9 @@ contextBridge.exposeInMainWorld('desk', {
   widget: (d) => ipcRenderer.send('desk:widget', d),
   prefs: () => ipcRenderer.sendSync('desk:prefs'),
   setPref: (k, v) => ipcRenderer.send('desk:setpref', k, v),
+  updGet: () => ipcRenderer.sendSync('desk:upd-get'),
+  updCheck: () => ipcRenderer.send('desk:upd-check'),
+  updInstall: () => ipcRenderer.send('desk:upd-install'),
+  onUpd: (cb) => ipcRenderer.on('desk:upd', (e, u) => cb(u)),
   onAction: (cb) => ipcRenderer.on('desk:action', (e, a) => cb(a))
 });
