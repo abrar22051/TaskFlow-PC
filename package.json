@@ -1,6 +1,6 @@
 {
   "name": "taskflow-desktop",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "TaskFlow - daily task timer",
   "main": "main.js",
   "author": "TaskFlow",
