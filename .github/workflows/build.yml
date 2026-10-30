@@ -2,7 +2,10 @@ name: Build Windows app
 on:
   push:
     branches: [main, master]
+    tags: ['v*']
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: windows-latest
@@ -13,10 +16,17 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Build installer
+      - name: Build installer (test build, no release)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         run: npx electron-builder --win --x64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Build and publish release (auto-update)
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: npx electron-builder --win --x64 --publish always
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: TaskFlow-Windows
