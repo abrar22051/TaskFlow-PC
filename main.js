@@ -14,7 +14,11 @@ function boot() {
   fs.mkdirSync(dir, { recursive: true });
   const dataFile = path.join(dir, 'taskflow-data.json');
   const prefFile = path.join(dir, 'prefs.json');
-  const iconImg = nativeImage.createFromPath(path.join(__dirname, process.platform === 'win32' ? 'icon.ico' : 'icon.png'));
+  // Icons are unpacked from the asar so Windows can load them natively (fixes blank taskbar icon)
+  const rp = (n) => (app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked', n) : path.join(__dirname, n));
+  let iconPath = rp(process.platform === 'win32' ? 'icon.ico' : 'icon.png');
+  let iconImg = fs.existsSync(iconPath) ? nativeImage.createFromPath(iconPath) : nativeImage.createEmpty();
+  if (iconImg.isEmpty()) { iconPath = path.join(__dirname, 'icon.png'); iconImg = nativeImage.createFromPath(iconPath); }
   const startedHidden = process.argv.includes('--hidden');
 
   // ---------- safe saving (survives power cuts) ----------
@@ -101,7 +105,7 @@ function boot() {
     const b = prefs.bounds || {};
     win = new BrowserWindow({
       width: b.width || 480, height: b.height || 820, x: b.x, y: b.y, minWidth: 380, minHeight: 560,
-      backgroundColor: '#0e1419', title: 'TaskFlow', icon: iconImg, autoHideMenuBar: true, show: false,
+      backgroundColor: '#0e1419', title: 'TaskFlow', icon: iconPath, autoHideMenuBar: true, show: false,
       webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false }
     });
     win.setMenuBarVisibility(false);
