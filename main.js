@@ -192,7 +192,11 @@ function boot() {
     savePrefs();
   }
   ipcMain.on('desk:widget', (e, d) => { wdata = d; if (wwin && !wwin.isDestroyed()) wwin.webContents.send('w:data', d); });
-  ipcMain.on('w:action', (e, a) => { if (win && !win.isDestroyed()) win.webContents.send('desk:action', a); });
+  ipcMain.on('w:action', (e, a) => {
+    if (!win || win.isDestroyed()) return;
+    const wc = win.webContents;
+    if (wc.isLoading()) wc.once('did-finish-load', () => wc.send('desk:action', a)); else wc.send('desk:action', a);
+  });
   ipcMain.on('w:open', showMain);
   ipcMain.on('w:hide', () => setPref('widget', false));
   ipcMain.on('w:min', toggleCollapse);

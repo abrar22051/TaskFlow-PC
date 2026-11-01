@@ -7,7 +7,7 @@ header span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 header button{-webkit-app-region:no-drag;background:none;border:0;color:#9fb0be;font-size:15px;cursor:pointer;padding:2px 7px;border-radius:6px;line-height:1.2}header button:hover{background:#2b3946;color:#fff}
 #list{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 10px}#list::-webkit-scrollbar{width:6px}#list::-webkit-scrollbar-thumb{background:#2b3946;border-radius:3px}
 .row{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid #1f2b38}
-.dot{font-size:12px;width:14px;padding-top:3px}.go{flex:none;-webkit-app-region:no-drag;touch-action:manipulation;background:#1f2b38;border:0;color:#e8eef3;border-radius:6px;cursor:pointer;width:26px;height:24px}.go:hover{background:#3B82F6;color:#fff}
+.dot{font-size:12px;width:14px;padding-top:3px}.go{flex:none;-webkit-app-region:no-drag;touch-action:manipulation;background:#1f2b38;border:0;color:#e8eef3;border-radius:6px;cursor:pointer;width:32px;height:30px;font-size:14px}.go:hover{background:#3B82F6;color:#fff}
 .t{flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;padding-top:2px}.m{flex:none;color:#9fb0be;font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;padding-top:3px}.m.r{color:#3B82F6;font-weight:600}
 #q{display:flex;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid #1f2b38;color:#9fb0be;font-style:italic;font-size:12px;max-height:38%;overflow:hidden}#q img{width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none}
 .empty{color:#9fb0be;padding:10px 0}body.min #list,body.min #q{display:none}body.min header{min-height:36px}
@@ -31,6 +31,8 @@ function render(){const L=$('#list');if(!D){SIG='';L.replaceChildren(Object.assi
  const q=$('#q');q.hidden=!(D.q||D.qi);$('#qt').textContent=D.q?'“'+D.q+'”':'';const i=$('#qi');i.hidden=!D.qi;if(D.qi&&i.getAttribute('src')!==D.qi)i.src=D.qi;live()}
 function live(){if(!D)return;head();D.top.forEach(t=>{const m=document.querySelector('.m[data-id="'+t.id+'"]');if(!m)return;m.textContent=t.r?'▶ '+hms((Date.now()-t.b)/1000)+' / '+t.tg:(t.tm?t.tm+' · ':'')+hms(t.k)+' / '+t.tg})}
 function setMin(v){MIN=!!v;document.body.classList.toggle('min',MIN);const b=$('#mn');b.textContent=MIN?'▢':'—';b.title=b.ariaLabel=MIN?'Expand widget':'Minimize widget';head()}
-$('#list').addEventListener('click',e=>{const b=e.target.closest('.go');if(!b)return;const n=Date.now();if(n-lastClick<350)return;lastClick=n;b.style.opacity='.5';setTimeout(()=>b.style.opacity='',400);wapi.action({type:'toggle',id:b.dataset.id})});
+function act(b){const n=Date.now();if(n-lastClick<400)return;lastClick=n;b.textContent=b.textContent==='▶'?'⏸':'▶';b.style.opacity='.5';wapi.action({type:'toggle',id:b.dataset.id});setTimeout(()=>{SIG='';render()},1500)}
+$('#list').addEventListener('pointerdown',e=>{if(e.button!==0)return;const b=e.target.closest('.go');if(b){e.preventDefault();act(b)}});
+$('#list').addEventListener('click',e=>{const b=e.target.closest('.go');if(b&&e.detail===0)act(b)});
 wapi.onData(d=>{D=d;render()});wapi.onMin(setMin);$('#mn').onclick=()=>wapi.min();$('#op').onclick=()=>wapi.open();$('#hd').onclick=()=>wapi.hide();$('#ttl').ondblclick=()=>wapi.open();setInterval(live,1000);render();
 </script></body></html>
